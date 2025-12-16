@@ -47,20 +47,39 @@ const normalizeContent = (content: string): string => {
 const htmlToPlainText = (html: string): string => {
   const temp = document.createElement('div');
   temp.innerHTML = html;
-  // Replace block elements with newlines
-  const blockElements = ['p', 'div', 'br', 'li', 'tr'];
-  blockElements.forEach(tag => {
-    const elements = temp.getElementsByTagName(tag);
-    for (let i = elements.length - 1; i >= 0; i--) {
-        const el = elements[i];
-        if (tag === 'br') {
-            el.replaceWith('\n');
-        } else {
-            el.after('\n');
-        }
+  
+  // Replace <br> with newline
+  const brs = temp.querySelectorAll('br');
+  brs.forEach(br => br.replaceWith('\n'));
+  
+  // Add newline after block elements to simulate visual break
+  const blockElements = temp.querySelectorAll('p, div, li, tr');
+  blockElements.forEach(el => {
+    if (el.parentNode) {
+      el.after('\n');
     }
   });
-  return temp.textContent || temp.innerText || '';
+
+  let text = temp.textContent || temp.innerText || '';
+
+  // --- CRITICAL FIX FOR ZALO/MESSENGER ---
+  // These apps collapse consecutive newlines (empty lines).
+  // We split the text by newlines, and if a line is empty, 
+  // we replace it with a Zero Width Space (\u200B).
+  // This makes the line "have content" to Zalo, but invisible to the user.
+  
+  // 1. Normalize line endings
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  
+  // 2. Process lines
+  const lines = text.split('\n');
+  const processedLines = lines.map(line => {
+    // If line is empty or just whitespace, replace with ZWS
+    return line.trim() === '' ? '\u200B' : line;
+  });
+  
+  // 3. Join back
+  return processedLines.join('\n');
 };
 
 // --- Components ---
@@ -109,7 +128,6 @@ const RichTextEditor: React.FC<{
         className="flex-1 p-3 outline-none overflow-y-auto text-sm font-sans leading-relaxed min-h-[150px] empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
         onInput={(e) => onChange(e.currentTarget.innerHTML)}
         data-placeholder={placeholder}
-        style={{ whiteSpace: 'pre-wrap' }}
       />
     </div>
   );
