@@ -317,7 +317,7 @@ const App: React.FC = () => {
       <div className="p-4 border-b border-gray-100 bg-white">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
-            <Send className="w-6 h-6" /> InsureChat
+            <Send className="w-6 h-6" /> NHS Chat
           </h1>
           <button 
             onClick={handleCreateNew}
